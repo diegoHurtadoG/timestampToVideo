@@ -4,6 +4,7 @@ import datetime
 from dateutil import parser
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
+import os
 
 def add_timestamp_to_video(video_path, xml_path, output_path):
     """
@@ -72,9 +73,41 @@ def add_timestamp_to_video(video_path, xml_path, output_path):
 
 
 if __name__ == "__main__":
-    video_file = "./C0002.MP4"
-    xml_file = "./C0002M01.XML"
-    output_file = "./C0002_with_timestamp.MP4"
+    # Define the input and output directories
+    input_dir = "inputs"
+    output_dir = "outputs"
     
-    add_timestamp_to_video(video_file, xml_file, output_file)
-    print(f"Video saved to {output_file}")
+    # Create the output directory if it doesn't already exist
+    os.makedirs(output_dir, exist_ok=True)
+    
+    print(f"Starting batch process...")
+    print(f"Input directory: {input_dir}")
+    print(f"Output directory: {output_dir}")
+    
+    # Get a list of all files in the input directory
+    files_in_input = os.listdir(input_dir)
+    
+    # Loop through every file
+    for filename in files_in_input:
+        # Check if the file is an MP4 video
+        if filename.lower().endswith(".mp4"):
+            # Construct the full paths for the video and XML files
+            video_name_base = filename[:-4] # Removes the .mp4 extension
+            
+            video_path = os.path.join(input_dir, filename)
+            xml_path = os.path.join(input_dir, f"{video_name_base}M01.XML")
+            output_path = os.path.join(output_dir, f"{video_name_base}_timestamp.MP4")
+            
+            # IMPORTANT: Check if the matching XML file actually exists
+            if not os.path.exists(xml_path):
+                print(f"⚠️  Warning: Skipping '{video_path}' because its XML file was not found.")
+                continue # Skip to the next file in the loop
+
+            print(f"Processing '{filename}'...")
+            
+            # Call the function to process this video
+            add_timestamp_to_video(video_path, xml_path, output_path)
+            
+            print(f"✅  Finished: Saved to '{output_path}'")
+            
+    print("\nBatch process complete!")

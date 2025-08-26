@@ -7,9 +7,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 def add_timestamp_to_video(video_path, xml_path, output_path):
     """
-    Adds a running timestamp to a video file by modifying each frame directly.
+    Adds a running timestamp to a video file, styled to look like a classic video recorder.
     """
-    # --- This part remains the same ---
     # Parse the XML file to get the creation date
     tree = ET.parse(xml_path)
     root = tree.getroot()
@@ -21,9 +20,7 @@ def add_timestamp_to_video(video_path, xml_path, output_path):
     # Load the video clip
     video = VideoFileClip(video_path)
 
-    # --- Major Change Here ---
-    # We define a function that will process each frame of the video.
-    # The function receives get_frame (gf) and the current time (t).
+    # This function will process each frame of the video.
     def draw_timestamp_on_frame(get_frame, t):
         # Get the original video frame at time t
         frame = get_frame(t)
@@ -32,15 +29,16 @@ def add_timestamp_to_video(video_path, xml_path, output_path):
         img = Image.fromarray(frame)
         draw = ImageDraw.Draw(img)
 
-        # Generate the timestamp text, including milliseconds for precision
+        # --- CHANGE #1: Timestamp format without milliseconds ---
         current_time = creation_date + datetime.timedelta(seconds=t)
-        # The .%f adds microseconds, we slice it to get milliseconds
-        time_str = current_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+        time_str = current_time.strftime('%Y-%m-%d %H:%M:%S')
 
-        # Choose a font and size
+        # --- CHANGE #2: Bigger, monospaced font for a VCR look ---
         try:
-            font = ImageFont.truetype("DejaVuSans.ttf", 40)
+            # Using a bold, monospaced font is great for this style. Increase 70 to make it bigger.
+            font = ImageFont.truetype("./DejaVuSansMono-Bold.ttf", 110) 
         except IOError:
+            # Fallback to a default monospaced font if the above isn't found
             font = ImageFont.load_default()
 
         # Get text size to calculate position
@@ -48,22 +46,21 @@ def add_timestamp_to_video(video_path, xml_path, output_path):
         text_width = bbox[2] - bbox[0]
         text_height = bbox[3] - bbox[1]
 
-        # Position the text at the bottom center
-        x = (video.size[0] - text_width) / 2
-        y = video.size[1] - text_height - 20 # Added a little more padding from bottom
+        # --- CHANGE #3: Position the text in the bottom-right corner ---
+        margin = 100
+        x = video.size[0] - text_width - margin
+        y = video.size[1] - text_height - margin
 
         # Draw the text directly on the frame image.
-        # The fill color is now RGB (255, 255, 255) since the image has no alpha channel.
         draw.text((x, y), time_str, font=font, fill=(255, 255, 255))
 
         # Convert the modified PIL image back to a numpy array and return it
         return np.array(img)
 
     # Apply the frame-processing function to the video.
-    # .fl() creates a new clip where each frame is the result of our function.
     video_with_timestamp = video.fl(draw_timestamp_on_frame)
     
-    # Write the result to a file (same as before)
+    # Write the result to a file
     video_with_timestamp.write_videofile(
         output_path,
         fps=video.fps,
@@ -73,10 +70,11 @@ def add_timestamp_to_video(video_path, xml_path, output_path):
         audio_codec='aac'
     )
 
+
 if __name__ == "__main__":
-    video_file = "/home/diego/video_timestamp/C0002.MP4"
-    xml_file = "/home/diego/video_timestamp/C0002M01.XML"
-    output_file = "/home/diego/video_timestamp/C0002_with_timestamp.MP4"
+    video_file = "./C0002.MP4"
+    xml_file = "./C0002M01.XML"
+    output_file = "./C0002_with_timestamp.MP4"
     
     add_timestamp_to_video(video_file, xml_file, output_file)
     print(f"Video saved to {output_file}")

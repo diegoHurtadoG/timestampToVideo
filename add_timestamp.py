@@ -84,7 +84,7 @@ if __name__ == "__main__":
             video_name_base = filename[:-4]
             video_path = os.path.join(input_dir, filename)
             xml_path = os.path.join(input_dir, f"{video_name_base}M01.XML")
-            output_path = os.path.join(output_dir, f"{video_name_base}_timestamp.MP4")
+            output_path = os.path.join(output_dir, f"timestamped_{video_name_base}.MP4")
             
             if os.path.exists(xml_path):
                 # Add the arguments for this job to our list

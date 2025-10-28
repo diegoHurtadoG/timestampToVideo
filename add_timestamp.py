@@ -79,18 +79,25 @@ if __name__ == "__main__":
     
     # 1. First, we gather all the jobs that need to be done.
     jobs = []
-    for filename in os.listdir(input_dir):
-        if filename.lower().endswith(".mp4"):
-            video_name_base = filename[:-4]
-            video_path = os.path.join(input_dir, filename)
-            xml_path = os.path.join(input_dir, f"{video_name_base}M01.XML")
-            output_path = os.path.join(output_dir, f"timestamped_{video_name_base}.MP4")
-            
-            if os.path.exists(xml_path):
-                # Add the arguments for this job to our list
-                jobs.append((video_path, xml_path, output_path))
-            else:
-                print(f"⚠️  Warning: Skipping '{video_path}' because its XML file was not found.")
+    print("🔎 Searching for videos recursively...")
+    for current_dir, _, filenames in os.walk(input_dir):
+        for filename in filenames:
+            if filename.lower().endswith(".mp4"):
+                video_path = os.path.join(current_dir, filename)
+                
+                video_name_base = filename[:-4]
+                xml_path = os.path.join(current_dir, f"{video_name_base}M01.XML")
+
+                output_sub_dir = current_dir.replace(input_dir, output_dir, 1)
+                
+                os.makedirs(output_sub_dir, exist_ok=True)
+                
+                output_path = os.path.join(output_sub_dir, f"{video_name_base}_timestamp.MP4")
+
+                if os.path.exists(xml_path):
+                    jobs.append((video_path, xml_path, output_path))
+                else:
+                    tqdm.write(f"⚠️  Warning: Skipping '{video_path}' (XML not found).")
 
     if not jobs:
         print("No video files found to process.")
